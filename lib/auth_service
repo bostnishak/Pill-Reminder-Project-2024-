@@ -1,0 +1,48 @@
+import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+class AuthService {
+  final userCollection = FirebaseFirestore.instance.collection("users");
+  final firebaseAuth = FirebaseAuth.instance;
+
+  Future<void> signUp({required String name, required String age}) async {
+    try {
+      // UserCredential kullanıcı kimlik bilgisi
+      final UserCredential userCredential = await firebaseAuth
+          .createUserWithEmailAndPassword(
+              email: "${name.toLowerCase()}@example.com",
+              password: "password123"); // Geçici şifre
+      if (userCredential.user != null) {
+        await _registerUser(name: name, age: age);
+        // Kayıt işlemi başarılıysa ana sayfaya yönlendir
+        // Örnek olarak Fluttertoast.showToast yerine farklı bir yönlendirme yapılabilir.
+      }
+    } on FirebaseAuthException catch (e) {
+      // Kayıt sırasında hata olursa hata mesajını göster
+      Fluttertoast.showToast(msg: e.message!, toastLength: Toast.LENGTH_LONG);
+    }
+  }
+
+  Future<void> signIn({required String email, required String password}) async {
+    try {
+      final UserCredential userCredential = await firebaseAuth
+          .signInWithEmailAndPassword(email: email, password: password);
+      if (userCredential.user != null) {
+        // Giriş başarılıysa ana sayfaya yönlendir
+        // Örnek olarak Fluttertoast.showToast yerine farklı bir yönlendirme yapılabilir.
+      }
+    } on FirebaseAuthException catch (e) {
+      // Giriş sırasında hata olursa hata mesajını göster
+      Fluttertoast.showToast(msg: e.message!, toastLength: Toast.LENGTH_LONG);
+    }
+  }
+
+  Future<void> _registerUser({required String name, required String age}) async {
+    // Kullanıcının bilgilerini Firestore'a kaydet
+    await userCollection.doc(name.toLowerCase()).set({"name": name, "age": age});
+  }
+}
